@@ -7,7 +7,7 @@ Pour comparer la version 2D et la version 3D, regardez le code gl_brick_2D.py
 On fait de la 3D grâce à OpenGL.
 ATTENTION: Ce code utilise de la Vieille 3D (années 2000)
 On parle d'OpenGL "version 2" ou de "fixed pipeline" ou "mode immédiat" ou "opengl sans shaders"
-Il est vivement conseillé d'apprendre les shaders dès le début de votre apprentissage OpenGL
+Il est vivement conseillé d'apprende les shaders dès le début de votre apprentissage OpenGL
 pour pouvoir faire de puissants effets modernes.
 Il y a plein de fichier d'exemples pour les shaders sur le site.
 Un très bon tutoriel d'opengl moderne (OpenGL 3 / OpenGL avec shaders) est :
@@ -24,6 +24,8 @@ import random
 # importer la bibliothèque OpenGL !
 from OpenGL.GL import *
 from OpenGL.GLU import *
+
+
 
 import sys
 pygame.init()
