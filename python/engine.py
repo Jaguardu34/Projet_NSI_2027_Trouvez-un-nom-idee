@@ -1,6 +1,7 @@
 
 import pygame
 from entity import ball
+from entity import segment as seg
 import pymunk
 import pymunk.pygame_util
 import random
@@ -26,29 +27,28 @@ def main():
     space.gravity = 0, 900
     
     #Sol
-    b0 = space.static_body
-    segment = pymunk.Segment(b0, (0, 480), (640, 480), 4)  # De (0,0) à (640,0), épaisseur 4
-    segment.elasticity = 1
-    segment.friction = 0.4
+
+    sol = seg.Segment((0, 480), (640, 480), space, elasticity=1, friction=0.4)
+    sol.add_in_space(space)
     
+    
+    mur_droite = seg.Segment((640, 0), (640, 480), space, elasticity=1, friction=0.4)
+    mur_droite.add_in_space(space)
+    
+    collid = seg.Segment((0, 200), (200, 250), space, elasticity=1, friction=0.4)
+    collid.add_in_space(space)
+    
+    collid2 = seg.Segment((0, 400), (200, 480), space, elasticity=1, friction=0.4)
+    collid2.add_in_space(space)
     
     #Balle
     
-    BASE_DIR = os.path.dirname(__file__)  # dossier de engine.py
-    sprite_sheet = pygame.image.load(os.path.join(BASE_DIR, 'assets', 'astraya_textures_final.png'))
-
-
-    def get_sprite(sheet, x, y, width, height):
-        sprite = pygame.Surface((width, height), pygame.SRCALPHA)
-        sprite.blit(sheet, (0, 0), (x, y, width, height))
-        return sprite
     
-    texture_ball = get_sprite(sprite_sheet, 0, 288, 16, 16)
-    ball1 = ball.Ball(100, 100, 10, texture_ball)
+    texture_ball = pygame.Surface((10,10))
+    ball1 = ball.Ball(100, 100, 10, texture_ball, elasticity=0.7)
     
     ball1.add_in_space(space)
-    
-    space.add(segment)
+
     
 
     
