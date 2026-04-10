@@ -35,12 +35,12 @@ def main():
     mur_droite = seg.Segment((640, 0), (640, 480), space, elasticity=1, friction=0.4)
     mur_droite.add_in_space(space)
     
-    collid = seg.Segment((0, 200), (200, 250), space, elasticity=1, friction=0.4)
-    collid.add_in_space(space)
+    mur_gauche = seg.Segment((0, 0), (0, 480), space, elasticity=1, friction=0.4)
+    mur_gauche.add_in_space(space)
     
-    collid2 = seg.Segment((0, 400), (200, 480), space, elasticity=1, friction=0.4)
-    collid2.add_in_space(space)
-    
+    seg1 = seg.Segment((600, 200), (640, 200), space, elasticity=1, friction=0.4)
+    seg1.add_in_space(space)
+
     #Balle
     
     
@@ -48,9 +48,43 @@ def main():
     ball1 = ball.Ball(100, 100, 10, texture_ball, elasticity=0.7)
     
     ball1.add_in_space(space)
-
     
+    ball2 = ball.Ball(200, 80, 10, texture_ball, elasticity=0.7)
+    
+    ball2.add_in_space(space)
+    
+    ball3 = ball.Ball(300, 100, 10, texture_ball, elasticity=0.7)
+    
+    ball3.add_in_space(space)
+    
+    join = pymunk.PinJoint(ball1.body, ball2.body, (0,0), (0,0))
 
+    join2 = pymunk.PinJoint(ball2.body, ball3.body, (0,0), (0,0))
+
+    muscle_lenght = 150
+    
+    muscle = pymunk.DampedSpring(ball1.body, ball3.body, (0,0), (0,0), muscle_lenght, 200, 10)
+    
+    space.add(join, join2, muscle)
+
+    muscle_up = True
+    
+    
+    b_arm1 = pymunk.Body(1, 10)
+    b_arm1.position = 400, 100
+    arm1_shape = pymunk.Segment(b_arm1, (0,0), (100,0),4)
+    
+    b_arm2 = pymunk.Body(1, 10)
+    b_arm2.position = 500, 100
+    arm2_shape = pymunk.Segment(b_arm2, (0, 0), (100,0),4)
+    
+    muscle_lenght2 = 200
+    muscle_up2 = True
+    muscle2 = pymunk.DampedSpring(b_arm1, b_arm2, (80,0), (60,0), muscle_lenght, 200, 10)
+    
+    rotation_arm = pymunk.PivotJoint(b_arm1, b_arm2, (100, 0), (0, 0))
+    
+    space.add(b_arm1, arm1_shape, b_arm2, arm2_shape, rotation_arm, muscle2)
     
     
 
@@ -66,7 +100,30 @@ def main():
         # Superposition du fond ciel
         screen.fill("gray")    # Efface l'écran
         
+        
+        if muscle_up:
+            muscle_lenght +=1
+        else:
+            muscle_lenght -=1
+            
+        if muscle_lenght <= 50: 
+            muscle_up = True
+        elif muscle_lenght >= 150:
+            muscle_up = False
+            
+        if muscle_up2:
+            muscle_lenght2 +=1
+        else:
+            muscle_lenght2 -=1
+            
+        if muscle_lenght2 <= 25: 
+            muscle_up2 = True
+        elif muscle_lenght2 >= 200:
+            muscle_up2 = False
 
+        muscle2.rest_length = muscle_lenght2
+
+        muscle.rest_length = muscle_lenght
         
         space.step(0.01)  
 
