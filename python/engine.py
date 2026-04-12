@@ -35,58 +35,39 @@ def main():
     mur_gauche = seg.Segment((0, 0), (0, 480), space, elasticity=1, friction=0.4)
     mur_gauche.add_in_space(space)
 
-    seg1 = seg.Segment((600, 200), (640, 200), space, elasticity=1, friction=0.4)
-    seg1.add_in_space(space)
-
     # Balle
 
-    texture_ball = pygame.Surface((10, 10))
-    ball1 = ball.Ball(100, 100, 10, texture_ball, elasticity=0.7)
-
-    ball1.add_in_space(space)
-
-    ball2 = ball.Ball(200, 80, 10, texture_ball, elasticity=0.7)
-
-    ball2.add_in_space(space)
-
-    ball3 = ball.Ball(300, 100, 10, texture_ball, elasticity=0.7)
-
-    ball3.add_in_space(space)
-
-    join = pymunk.PinJoint(ball1.body, ball2.body, (0, 0), (0, 0))
-
-    join2 = pymunk.PinJoint(ball2.body, ball3.body, (0, 0), (0, 0))
-
-    muscle_lenght = 150
-
-    muscle = pymunk.DampedSpring(
-        ball1.body, ball3.body, (0, 0), (0, 0), muscle_lenght, 200, 10
-    )
-
-    space.add(join, join2, muscle)
-
-    muscle_up = True
-
-    b_arm1 = pymunk.Body(1, 10)
+    # b_arm1 ancré au monde mais reste dynamique (peut tourner)
+    b_arm1 = pymunk.Body(1, pymunk.moment_for_segment(10, (0, 0), (100, 0), 4))
     b_arm1.position = 400, 100
     arm1_shape = pymunk.Segment(b_arm1, (0, 0), (100, 0), 4)
 
-    b_arm2 = pymunk.Body(1, 10)
-    b_arm2.position = 500, 100
-    arm2_shape = pymunk.Segment(b_arm2, (0, 0), (100, 0), 4)
+    # Pivot fixe à l'épaule
+    shoulder = pymunk.PivotJoint(space.static_body, b_arm1, (400, 100))
+    space.add(shoulder)
 
-    muscle_lenght2 = 200
+    # b_arm2 entièrement dynamique
+    b_arm2 = pymunk.Body(10, pymunk.moment_for_segment(1, (0, 0), (100, 0), 4))
+    b_arm2.position = 510, 120
+    arm2_shape = pymunk.Segment(b_arm2, (0, 0), (0, 100), 4)
+
+    # Pivot à l'articulation (coude)
+    elbow = pymunk.PivotJoint(b_arm1, b_arm2, (510, 110))
+    elbow_max = pymunk.RotaryLimitJoint(b_arm1, b_arm2, -1.5, 1.5)
+    space.add(elbow, elbow_max)
+
     muscle_up2 = True
+    muscle_lenght2 = 100
+    # Muscle entre les deux corps
     muscle2 = pymunk.DampedSpring(
-        b_arm1, b_arm2, (80, 0), (60, 0), muscle_lenght, 200, 10
+        b_arm1, b_arm2, (20, 0), (-4, 20), muscle_lenght2, 10000, 200
     )
-
-    rotation_arm = pymunk.PivotJoint(b_arm1, b_arm2, (100, 0), (0, 0))
-
-    space.add(b_arm1, arm1_shape, b_arm2, arm2_shape, rotation_arm, muscle2)
+    space.add(b_arm1, arm1_shape, b_arm2, arm2_shape, muscle2)
 
     # loop
     loop = True
+
+    space.iterations = 30  # default = 10
 
     while loop:
         for event in pygame.event.get():
@@ -96,38 +77,25 @@ def main():
         # Superposition du fond ciel
         screen.fill("gray")  # Efface l'écran
 
-        if muscle_up:
-            muscle_lenght += 1
-        else:
-            muscle_lenght -= 1
-
-        if muscle_lenght <= 50:
-            muscle_up = True
-        elif muscle_lenght >= 150:
-            muscle_up = False
-
         if muscle_up2:
-            muscle_lenght2 += 1
+            muscle_lenght2 += 0.5
         else:
-            muscle_lenght2 -= 1
+            muscle_lenght2 -= 0.5
 
-        if muscle_lenght2 <= 25:
+        if muscle_lenght2 <= 60:
             muscle_up2 = True
-        elif muscle_lenght2 >= 200:
+        elif muscle_lenght2 >= 120:
             muscle_up2 = False
+
+        print(muscle_lenght2)
 
         muscle2.rest_length = muscle_lenght2
 
-        muscle.rest_length = muscle_lenght
+        steps = 10
+        for _ in range(steps):
+            space.step(0.001 / steps)
 
-        space.step(0.01)
-
-        if not debug:
-            ball1.draw(screen)
-        else:
-            space.debug_draw(draw_options)
-
-        screen.blit(screen, (0, 0))
+        space.debug_draw(draw_options)
 
         # Rafraîchissement de l'écran
         pygame.display.flip()
