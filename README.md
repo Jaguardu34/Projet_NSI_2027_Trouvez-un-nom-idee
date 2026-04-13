@@ -1,7 +1,7 @@
 # Projet NSI 2027
 
 - Basé sur **Pygames**
-
+- Utilisation de **Pymunk** pour le moteur physique associé a pygame sprite pour les textures.
 ## _Idées_
 
 - Problème a 3 corps
