@@ -1,5 +1,4 @@
 import math
-from fcntl import F_SEAL_SEAL
 
 import pygame
 import pymunk
