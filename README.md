@@ -8,6 +8,7 @@
 - Factorio
 - Jeux de l'évolution (CodeBH)
 - Jeux de la vie
+- Sybau
 
 ## _A faire_
 
