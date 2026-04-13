@@ -1,10 +1,11 @@
 import math
+from fcntl import F_SEAL_SEAL
 
 import pygame
 import pymunk
 import pymunk.pygame_util
-from entity import ball
 from entity import segment as seg
+from entity.muscle import Muscle
 
 # Before you can do much with pygame, you will need to initialize it
 pygame.init()
@@ -46,32 +47,43 @@ def main():
 
     # Balle
 
+    right_rib = pymunk.Body(body_type=pymunk.Body.STATIC)
+    right_rib.position = 390, 110
+    right_rib_shape = pymunk.Segment(right_rib, (0, 0), (-10, 100), 4)
+    space.add(right_rib, right_rib_shape)
+
     # b_arm1 ancré au monde mais reste dynamique (peut tourner)
-    b_arm1 = pymunk.Body(body_type=pymunk.Body.STATIC)
-    b_arm1.position = 400, 100
-    arm1_shape = pymunk.Segment(b_arm1, (0, 0), (100, 0), 4)
+    right_arm = pymunk.Body(10, pymunk.moment_for_segment(10, (0, 0), (100, 0), 4))
+    right_arm.position = 400, 100
+    right_arm_shape = pymunk.Segment(right_arm, (0, 0), (100, 0), 4)
 
     # Pivot fixe à l'épaule
     # shoulder = pymunk.PivotJoint(space.static_body, b_arm1, (400, 100))
     # space.add(shoulder)
 
     # b_arm2 entièrement dynamique
-    b_arm2 = pymunk.Body(10, pymunk.moment_for_segment(10, (0, 0), (100, 0), 4))
-    b_arm2.position = 510, 120
-    arm2_shape = pymunk.Segment(b_arm2, (0, 0), (0, 100), 4)
+    right_forearm = pymunk.Body(10, pymunk.moment_for_segment(10, (0, 0), (0, -100), 4))
+    right_forearm.position = 510, 85
+    right_forearm_shape = pymunk.Segment(right_forearm, (0, 0), (0, -100), 4)
 
     # Pivot à l'articulation (coude)
-    elbow = pymunk.PivotJoint(b_arm1, b_arm2, (510, 110))
-    elbow_max = pymunk.RotaryLimitJoint(b_arm1, b_arm2, -1.5, 1.5)
+    elbow = pymunk.PivotJoint(right_arm, right_forearm, (510, 95))
+    elbow_max = pymunk.RotaryLimitJoint(right_arm, right_forearm, -1.5, 1.5)
     space.add(elbow, elbow_max)
 
-    muscle_up2 = True
-    muscle_lenght2 = 100
-    # Muscle entre les deux corps
-    muscle2 = pymunk.DampedSpring(
-        b_arm1, b_arm2, (20, 0), (-4, 20), muscle_lenght2, 10000, 200
-    )
-    space.add(b_arm1, arm1_shape, b_arm2, arm2_shape, muscle2)
+    right_shoulder = pymunk.PivotJoint(right_rib, right_arm, (400, 100))
+    shoulder_limit = pymunk.RotaryLimitJoint(right_rib, right_arm, -1.5, 1.5)
+    space.add(right_shoulder, shoulder_limit)
+
+    right_biceps = Muscle(right_arm, right_forearm, (20, -4), (-4, -10), space)
+
+    right_triceps = Muscle(right_arm, right_forearm, (20, 4), (0, 20), space)
+
+    right_dorsal = Muscle(right_rib, right_arm, (-10, 40), (20, 5), space)
+
+    right_deltoid = Muscle(right_rib, right_arm, (-50, -10), (-2, -15), space)
+
+    space.add(right_arm, right_arm_shape, right_forearm, right_forearm_shape)
 
     # loop
     loop = True
@@ -85,30 +97,26 @@ def main():
             if event.type == pygame.KEYDOWN:
                 # calcul des nouvelles coordonnées du rond
                 if event.key == pygame.K_SPACE:
-                    muscle_up2 = True
-                    muscle_lenght2 = 50
+                    # right_biceps_contract = True
+                    # right_biceps_strenght = 0
+                    right_biceps.update(True)
+                    right_triceps.update(False)
+                elif event.key == pygame.K_d:
+                    right_deltoid.update(True)
+                    right_dorsal.update(False)
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_SPACE:
-                    muscle_up2 = False
-                    muscle_lenght2 = 140
+                    # right_biceps_contract = False
+                    # right_biceps_strenght = 140
+                    right_biceps.update(False)
+                    right_triceps.update(True)
+                elif event.key == pygame.K_d:
+                    right_deltoid.update(False)
+                    right_dorsal.update(True)
 
         # Superposition du fond ciel
         screen.fill("gray")  # Efface l'écran
-
-        print(muscle_lenght2)
-
-        current_dist = get_distance(b_arm1, b_arm2, (20, 0), (-4, 20))
-
-        muscle2.rest_length = muscle_lenght2
-        if muscle_up2 and current_dist > muscle_lenght2:
-            # Phase contraction : tire activement
-            muscle2.stiffness = 10000
-            muscle2.rest_length = muscle_lenght2
-        elif not muscle_up2 and current_dist < muscle_lenght2:
-            # Phase relâche : aucune force peu importe la distance
-            muscle2.stiffness = 0
-            muscle2.rest_length = current_dist
 
         steps = 10
         for _ in range(steps):
